@@ -1,4 +1,5 @@
 from pytube import YouTube
+import pytube
 import re
 import urllib.request
 import urllib.error
@@ -64,8 +65,8 @@ def crawl(url):
         cPL = url[eq:]
             
     else:
-        print('Incorrect Playlist.')
-        exit(1)
+        print('Incorrect Playlist. Trying to download as video')
+        return False
     
     try:
         yTUBE = urllib.request.urlopen(url).read()
@@ -98,16 +99,22 @@ def crawl(url):
     return(all_url)
 
 if len(sys.argv) != 3:
-    raise ValueError("Need 2 command line arguments: url of playlist and Directory to save mp4s")
+    raise ValueError("Need 2 command line arguments: url of playlist or video and Directory to save mp4s, {} arguments provided".format(len(sys.argv)))
 
 urlList = crawl(sys.argv[1])
+if urlList == False:
+    urlList = [sys.argv[1]]
 directory = sys.argv[2]
 
 regex1 = re.compile('- ...p')
 regex2 = re.compile('- ....p')
 
 for url in urlList:
-    YTvid = YouTube(url)
+    try:
+        YTvid = YouTube(url)
+    except pytube.exceptions.PytubeError:
+        print("Not a youtube video or playlist")
+        exit(1)
     QualityString = FindBestQuality(YTvid)
     vid = YTvid.get('mp4', QualityString)
     print("Downloading: {}".format(url))
